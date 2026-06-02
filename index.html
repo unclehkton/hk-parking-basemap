@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hong Kong Parking Basemap</title>
+  <meta name="description" content="Standalone PMTiles basemap viewer for the Hong Kong public parking map.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__inner">
+      <div>
+        <p class="eyebrow">PMTiles Basemap Viewer</p>
+        <h1>Hong Kong Parking Basemap</h1>
+        <p class="lede">A lightweight public viewer for validating the Hong Kong PMTiles basemap before wiring it into the main public parking dashboard.</p>
+        <p class="lede lede--tc">香港停車地圖的底圖專用 viewer，獨立公開、方便驗證與部署。</p>
+      </div>
+      <div class="meta-card">
+        <div class="meta-card__label">Artifact target</div>
+        <div class="meta-card__value" id="artifact-label">hong-kong.pmtiles</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel">
+      <h2>Viewer Notes</h2>
+      <p>This page is only for validating the basemap layer. The public parking overlays continue to live in the main dashboard.</p>
+      <p class="panel__copy-tc">這頁只用來檢查底圖是否正常，停車場 / 錶位 / EV overlay 仍然由主 public dashboard 負責。</p>
+      <ul>
+        <li>Basemap source: OSM-derived PMTiles</li>
+        <li>Renderer: Leaflet with PMTiles / Protomaps compatible runtime</li>
+        <li>Fallback: OSM raster tiles if PMTiles is not configured</li>
+      </ul>
+      <div class="status" id="map-status">Preparing basemap…</div>
+      <dl class="details">
+        <div>
+          <dt>Fallback tiles</dt>
+          <dd id="fallback-label">https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png</dd>
+        </div>
+        <div>
+          <dt>PMTiles metadata</dt>
+          <dd id="tile-meta">Waiting for runtime config…</dd>
+        </div>
+      </dl>
+    </aside>
+
+    <section class="map-wrap">
+      <div id="map" class="map" data-pmtiles-url="./hong-kong.pmtiles"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© OpenStreetMap contributors</p>
+    <p>Map rendered with Leaflet</p>
+    <p>Basemap generation approach adapted from <a href="https://github.com/anscg/hk-pmtiles-generation" target="_blank" rel="noopener">anscg/hk-pmtiles-generation</a></p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/protomaps-leaflet@5.0.0/dist/protomaps-leaflet.js"></script>
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

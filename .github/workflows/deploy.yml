@@ -1,0 +1,84 @@
+name: Build And Deploy HK PMTiles
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '0 16 */4 * *'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify viewer files
+        run: |
+          test -f index.html
+          test -f app.js
+          test -f styles.css
+          test -f .nojekyll
+
+      - name: Clone protomaps basemaps
+        run: git clone https://github.com/protomaps/basemaps.git
+
+      - name: Download data sources
+        working-directory: basemaps/tiles
+        run: |
+          mkdir -p data/sources
+          wget -c https://download.geofabrik.de/asia/china/hong-kong-latest.osm.pbf -O data/sources/hong-kong.osm.pbf
+          wget -c https://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip -O data/sources/natural_earth_vector.sqlite.zip
+          wget -c --tries=5 https://qrank.toolforge.org/download/qrank.csv.gz -O data/sources/qrank.csv.gz
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build Hong Kong PMTiles
+        working-directory: basemaps/tiles
+        run: |
+          mvn -B clean package
+          java -Xmx10g -jar target/protomaps-basemap-HEAD-with-deps.jar \
+            --area=hong-kong \
+            --output=../../hong-kong.pmtiles \
+            --download \
+            --force
+
+      - name: Copy example config if repo config is missing
+        run: |
+          if [ ! -f config.js ]; then
+            cp config.example.js config.js
+          fi
+
+      - name: Prepare artifact metadata
+        run: |
+          ls -lh hong-kong.pmtiles
+          date -u +"%Y-%m-%d %H:%M UTC" > generated-at.txt
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
