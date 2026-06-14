@@ -1,5 +1,9 @@
 name: Build And Deploy HK PMTiles
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PROTOMAPS_BASEMAPS_REF: c809cd18333494c948ebc4228108a7ebf4f210ee
+
 on:
   push:
     branches:
@@ -23,7 +27,7 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Verify viewer files
         run: |
@@ -33,18 +37,31 @@ jobs:
           test -f .nojekyll
 
       - name: Clone protomaps basemaps
-        run: git clone https://github.com/protomaps/basemaps.git
+        run: |
+          git clone https://github.com/protomaps/basemaps.git
+          git -C basemaps checkout "$PROTOMAPS_BASEMAPS_REF"
 
       - name: Download data sources
         working-directory: basemaps/tiles
         run: |
+          download() {
+            local url="$1"
+            local target="$2"
+            curl -fL --retry 5 --retry-delay 5 --retry-all-errors --connect-timeout 30 "$url" -o "$target"
+          }
+
           mkdir -p data/sources
-          wget -c https://download.geofabrik.de/asia/china/hong-kong-latest.osm.pbf -O data/sources/hong-kong.osm.pbf
-          wget -c https://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip -O data/sources/natural_earth_vector.sqlite.zip
-          wget -c --tries=5 https://qrank.toolforge.org/download/qrank.csv.gz -O data/sources/qrank.csv.gz
+          download https://download.geofabrik.de/asia/china/hong-kong-latest.osm.pbf data/sources/hong-kong.osm.pbf
+          download https://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip data/sources/natural_earth_vector.sqlite.zip
+          download https://qrank.toolforge.org/download/qrank.csv.gz data/sources/qrank.csv.gz
+          download https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip data/sources/water-polygons-split-3857.zip
+          download https://osmdata.openstreetmap.de/download/land-polygons-split-3857.zip data/sources/land-polygons-split-3857.zip
+          download https://r2-public.protomaps.com/datasets/daylight-landcover.gpkg data/sources/daylight-landcover.gpkg
+          download https://wipfli.github.io/pgf-encoding/pgf-encoding.zip data/sources/pgf-encoding.zip
+          ls -lh data/sources
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -57,7 +74,6 @@ jobs:
           java -Xmx10g -jar target/protomaps-basemap-HEAD-with-deps.jar \
             --area=hong-kong \
             --output=../../hong-kong.pmtiles \
-            --download \
             --force
 
       - name: Copy example config if repo config is missing
