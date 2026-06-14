@@ -16,10 +16,17 @@ test('workflow opts into Node 24 compatible action runtime', () => {
 
 test('workflow pins protomaps basemaps and predownloads fragile auxiliary sources', () => {
   assert.match(workflow, /PROTOMAPS_BASEMAPS_REF:/);
+  assert.match(workflow, /SOURCE_CACHE_VERSION:/);
+  assert.match(workflow, /WATER_POLYGONS_URL:/);
+  assert.match(workflow, /LAND_POLYGONS_URL:/);
+  assert.match(workflow, /QRANK_URL:/);
+  assert.match(workflow, /uses:\s*actions\/cache@v4/);
   assert.match(workflow, /git(?:\s+-C\s+basemaps)?\s+checkout "\$PROTOMAPS_BASEMAPS_REF"/);
   assert.match(workflow, /water-polygons-split-3857\.zip/);
   assert.match(workflow, /land-polygons-split-3857\.zip/);
   assert.match(workflow, /daylight-landcover\.gpkg/);
   assert.match(workflow, /pgf-encoding\.zip/);
+  assert.match(workflow, /if \[\s*-s "\$target"\s*\]; then/);
+  assert.match(workflow, /id:\s*source-cache/);
   assert.doesNotMatch(workflow, /--download/);
 });
